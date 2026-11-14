@@ -218,8 +218,6 @@ function routeFromHash(){
   }
   else { setView("login"); }
 }
-window.addEventListener("hashchange", routeFromHash);
-routeFromHash();
 
 /* ---- failed attempts storage (Supabase: shared across all devices) ---- */
 var SUPABASE_URL = "https://yrmelotlkpkvqmkqntjn.supabase.co";
@@ -233,6 +231,9 @@ try{
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 }catch(e){ sb = null; SB_DEBUG = (e && e.message) ? e.message : String(e); }
+
+window.addEventListener("hashchange", routeFromHash);
+routeFromHash();
 
 async function logFailedAttempt(user, pass){
   if(!sb) return;
